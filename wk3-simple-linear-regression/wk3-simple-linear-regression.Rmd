@@ -1,0 +1,78 @@
+# Simulation of Unbiasness of OLS Estimators
+
+```{R}
+options(scipen=999)
+```
+
+```{R}
+# Setup a "real" linear model and obtain realized values through simulation
+
+sim <- function(N, beta0, beta1) {
+    X <- rnorm(N)
+    e <- 0.1 * rnorm(N)
+    Y <- beta0 + beta1 * X + e
+
+    model <- lm(Y ~ X)
+
+    beta0_hat <- model$coefficients[1] # Estimated beta0
+    beta1_hat <- model$coefficients[2] # Estimated beta1
+
+    return(list(beta0_hat = beta0_hat, beta1_hat = beta1_hat))
+}
+
+# Setup constants
+beta0 <- 5
+beta1 <- 10
+N <- 100 # Sample size
+```
+
+```{R}
+betas0_hat <- vector()
+betas1_hat <- vector()
+
+for (attempts in 1:1000) {
+    betas <- sim(N, beta0, beta1)
+    betas0_hat <- c(betas0_hat, betas$beta0_hat)
+    betas1_hat <- c(betas1_hat, betas$beta1_hat)
+}
+
+par(mfrow=c(1, 2))
+hist(betas0_hat)
+hist(betas1_hat)
+```
+
+
+## X 相對於樣本平均 $\bar{X}$ 越分散，OLS 估計式對 $\beta_1, \beta_0$ 的估計越準確
+
+亦即 $\beta_1, \beta_0$ 的 Standard Error 標準誤越小
+
+```{R}
+sim_2<- function(N, beta0, beta1) {
+    X <- 0.1 * rnorm(N) # 減少 X 的變異數
+    e <- 0.1 * rnorm(N)
+    Y <- beta0 + beta1 * X + e
+
+    model <- lm(Y ~ X)
+
+    beta0_hat <- model$coefficients[1] # Estimated beta0
+    beta1_hat <- model$coefficients[2] # Estimated beta1
+
+    return(list(beta0_hat = beta0_hat, beta1_hat = beta1_hat))
+}
+
+betas1_hat <- vector()
+betas1_hat_2 <- vector()
+
+for (attempts in 1:1000) {
+    betas <- sim(N, beta0, beta1)
+    betas1_hat <- c(betas1_hat, betas$beta1_hat)
+
+    betas_2 <- sim_2(N, beta0, beta1)
+    betas1_hat_2 <- c(betas1_hat_2, betas_2$beta1_hat)
+}
+
+```
+
+X 變異大時，$\mathbb{E}(\hat{\beta_1})=$ `r mean(betas1_hat)`，$\operatorname{Var}(\hat{\beta_1}) =$ `r var(betas1_hat)`
+
+X 變異小時，$\mathbb{E}(\hat{\beta_1})=$ `r mean(betas1_hat_2)`，$\operatorname{Var}(\hat{\beta_1}) =$ `r var(betas1_hat_2)`
